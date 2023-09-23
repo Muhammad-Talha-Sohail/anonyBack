@@ -10,6 +10,17 @@ const activate = require("./routes/activateRoutes");
 const roomRoutes = require("./routes/roomRoutes")
 const connectDb = require("./Db/conDb");
 
+const peerConnection = new RTCPeerConnection()
+peerConnection.onicecandidate=()=>console.log('iceCandidate',JSON.stringify(peerConnection.localDescription))
+let dataChannel;
+peerConnection.ondatachannel=(e)=>{
+  dataChannel = e.channel;
+  dataChannel.onopen=()=>console.log('channel open')
+  dataChannel.onmessage = (e)=>console.log('Message',e.data)}
+
+
+
+
 
 // middlewareuse
 const io = require('socket.io')(server,{
@@ -31,12 +42,37 @@ app.use("/api/", activate);
 app.use("/api/", roomRoutes);
 
 
+
+let answer;
 app.use("/storage", express.static("storage"));
 //connectDb
 connectDb();
 // socket
 io.on("connection", (socket) => {
-  console.log("new connection", socket.id);
+
+
+socket.on('user-joined',(data)=>{
+  answer = peerConnection.createAnswer()
+  peerConnection.setLocalDescription(answer)
+})
+
+socket.on('offer',offer=>{
+const receive =offer;
+peerConnection.setRemoteDescription(receive)
+
+
+  
+}
+
+
+  
+
+
+
+
+)
+
+  
 });
 server.listen(Port, () => console.log(`server is running at port ${Port}`));
 //run server
